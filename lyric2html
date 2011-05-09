@@ -1,0 +1,169 @@
+#!/usr/bin/perl
+
+# <Artista> - <Album> (<ano>)
+#
+# 01. <Tema 1>
+#
+# [<Info>]
+# <Texto>
+#
+# 02. <Tema 2>
+#
+# <Texto>
+
+$INPUT_FILE = shift;                                        # tomo el parametro de entrada como archivo a leer
+open(INPUT_FILE);                                           # lo abro
+@documento_a_leer = <INPUT_FILE>;                           # y lo cargo como documento a leer
+close(INPUT_FILE);
+
+# variable de numero de canciones
+$track_number = 0;
+@lista_de_temas = ();
+$temas = {};
+
+#comienzo a parsear el archivo con los temas
+foreach (@documento_a_leer) {                               # leo la entrada, y para cada linea...
+
+   s/\n//;
+
+   if( /([\s\w]*)\s+\-\s+([\s\w]*)\s+?.*(\(\d\d\d\d\))/ ){
+      $banda = uc $1;
+      $disco = $2;
+      $ano   = $3;
+   }elsif (/\d\d\..*/) {
+      $track_number++;
+      push(@lista_de_temas, "$_");
+   }else {
+     if (/\[.*\]/){
+        $temas{$track_number} = "$temas{$track_number}<i>$_</i><br/>\n";
+     }else{
+        $temas{$track_number} = "$temas{$track_number}$_<br/>\n";
+     } # if
+   } # if
+
+} # foreach
+
+# escribo los datos en el archivo
+$banda_file = "\u\L$banda";
+$OUTPUT_FILE = "$banda_file - $disco $ano.html";            # defino el archivo donde escribir
+open( OUTPUT_FILE, ">$OUTPUT_FILE" );                       # y lo abro listo para escritura
+
+html_head();
+html_header();
+html_nav();
+html_temas();
+html_footer();
+
+close(OUTPUT_FILE);                                         # cierro el archivo donde escribi
+
+#========================================
+
+sub html_head {
+   print OUTPUT_FILE "<!doctype html>\n";
+   print OUTPUT_FILE "<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->\n";
+   print OUTPUT_FILE "<!--[if lt IE 7 ]> <html class=\"no-js ie6\" lang=\"en\"> <![endif]-->\n";
+   print OUTPUT_FILE "<!--[if IE 7 ]>    <html class=\"no-js ie7\" lang=\"en\"> <![endif]-->\n";
+   print OUTPUT_FILE "<!--[if IE 8 ]>    <html class=\"no-js ie8\" lang=\"en\"> <![endif]-->\n";
+   print OUTPUT_FILE "<!--[if (gte IE 9)|!(IE)]><!--> <html class=\"no-js\" lang=\"en\"> <!--<![endif]-->\n";
+   print OUTPUT_FILE "<head>\n";
+   print OUTPUT_FILE "  <meta charset=\"utf-8\">\n";
+   print OUTPUT_FILE "  <title>$banda LYRICS - $disco $ano</title>\n";
+   print OUTPUT_FILE "  <style type=\"text/css\">\n";
+   print OUTPUT_FILE "    html{font-size: 100%;}\n";
+   print OUTPUT_FILE "    body {\n";
+   print OUTPUT_FILE "      background:#222222;\n";
+   print OUTPUT_FILE "      color:#cccccc;\n";
+   print OUTPUT_FILE "      font-family:Verdana;\n";
+   print OUTPUT_FILE "      max-width: 1010px;\n";
+   print OUTPUT_FILE "      margin:    0 auto;\n";
+   print OUTPUT_FILE "      padding:   0 30px;\n";
+   print OUTPUT_FILE "      text-align:center;\n";
+   print OUTPUT_FILE "    }\n";
+   print OUTPUT_FILE "    header {padding: 30px 0 30px 0; /* 30/230 */}\n";
+   print OUTPUT_FILE "    .songlist {padding: 15px 0 15px 0; /* 30/230 */}\n";
+   print OUTPUT_FILE "    .songlist a{\n";
+   print OUTPUT_FILE "      color:#ffffcc;\n";
+   print OUTPUT_FILE "      text-decoration: none;\n";
+   print OUTPUT_FILE "      font-size:1.3rem;\n";
+   print OUTPUT_FILE "    }\n";
+   print OUTPUT_FILE "    .container a{\n";
+   print OUTPUT_FILE "      color:#ffffcc;\n";
+   print OUTPUT_FILE "      text-decoration: none;\n";
+   print OUTPUT_FILE "    }\n";
+   print OUTPUT_FILE "    .container h1 {\n";
+   print OUTPUT_FILE "      color:#ffffcc;\n";
+   print OUTPUT_FILE "      font-size:1.5rem;\n";
+   print OUTPUT_FILE "    }\n";
+   print OUTPUT_FILE "    .container h2 {\n";
+   print OUTPUT_FILE "      color:#fff;\n";
+   print OUTPUT_FILE "      font-size:1.3rem;\n";
+   print OUTPUT_FILE "      font-weight:bold;\n";
+   print OUTPUT_FILE "    }\n";
+   print OUTPUT_FILE "    .tema{\n";
+   print OUTPUT_FILE "      color:#cccccc;\n";
+   print OUTPUT_FILE "      font-size:1.2rem;\n";
+   print OUTPUT_FILE "      padding: 15px 0 15px 0; /* 30/230 */\n";
+   print OUTPUT_FILE "    }\n";
+   print OUTPUT_FILE "    .tema h1 {\n";
+   print OUTPUT_FILE "      color:#dddddd;\n";
+   print OUTPUT_FILE "      font-weight:bold;\n";
+   print OUTPUT_FILE "      font-size:1.3rem;\n";
+   print OUTPUT_FILE "    }\n";
+   print OUTPUT_FILE "    .titulo{padding: 30px 0 30px 0; /* 30/230 */}\n";
+   print OUTPUT_FILE "    .pie{padding: 30px 0 30px 0; /* 30/230 */}\n";
+   print OUTPUT_FILE "  </style>\n";
+   print OUTPUT_FILE "</head>\n";
+} # html_head
+
+#========================================
+
+sub html_header {
+   print OUTPUT_FILE "<body>\n";
+   print OUTPUT_FILE "<div class=\"container\">\n";
+   print OUTPUT_FILE "<header class=\"titulo\">\n";
+   print OUTPUT_FILE "<h1>$banda LYRICS</h1>\n";
+   print OUTPUT_FILE "<h2>$disco $ano</h2>\n";
+   print OUTPUT_FILE "</header>\n";
+} # html_info
+
+#========================================
+
+sub html_nav {
+
+   $temas = 1;
+
+   print OUTPUT_FILE "<nav class=\"songlist\">\n";
+
+   foreach (@lista_de_temas) {
+      print OUTPUT_FILE "<a href=\"\#$temas\">$_</a><br/>\n";
+      $temas++;
+   } # foreach
+
+   print OUTPUT_FILE "</nav>\n";
+
+} # html_index
+
+#========================================
+
+sub html_temas {
+
+   for ($int = 1; $int <= $track_number; $int++) {
+      print OUTPUT_FILE "<div class=\"tema\" id=\"$int\">\n";
+      print OUTPUT_FILE "<h1>@lista_de_temas[$int-1]</h1>\n";
+      print OUTPUT_FILE "$temas{$int}\n";
+      print OUTPUT_FILE "</div>\n";
+   } # for
+
+} # html_tracks
+
+#========================================
+
+sub html_footer {
+   print OUTPUT_FILE "<footer class=\"pie\">\n";
+   print OUTPUT_FILE "All lyrics are the property and copyright of their owners.<br/>\n";
+   print OUTPUT_FILE "All lyrics provided for educational purposes only.<br/>\n";
+   print OUTPUT_FILE "</footer><!--pie-->\n";
+   print OUTPUT_FILE "</div><!--container-->\n";
+   print OUTPUT_FILE "</body>\n";
+   print OUTPUT_FILE "</html>\n";
+} # html_tail
